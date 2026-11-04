@@ -1,0 +1,11 @@
+www.wto.org:443
+www.mfyx.cn:443
+staticdelivery.nexusmods.com:443
+idc.urkeji.com:443
+spring.io:443,openai.com:443
+www.shopify.com:443
+coreweave.com:443
+cdn.7zz.cn:443,www.sofi.com:443
+saas.sin.fan:443,p.etime.vip:443
+224322.xyz:443,api.gzcrtw.com:443
+login.rockwellautomation.com:443
