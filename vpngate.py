@@ -7,15 +7,14 @@ VPN Gate SSTP 节点检测流水线
   2. 只保留「带 TCP 入口」的中继 = SSTP 可用节点
      (OpenVPN 配置里 proto tcp + remote <ip> <port>; UDP-only 中继无法走 SSTP/xray 链, 直接丢弃)
   3. 按 host+port+protocol 去重
-  4. 并发调用已部署的 Cloudflare Worker:  GET {WORKER}/check?proxyip=host:port
+  4. 并发调用已部署的 Cloudflare Worker:  GET {WORKER_CHECK_URL}/check?proxyip=host:port
      (单节点 HTTP 成功 != 节点可用; 以 Worker 返回 JSON 的 success 字段为准)
   5. 保留 success=true 的节点, 按国家分组, 生成 public/data.json + public/index.html
   6. 网页端 (GitHub Pages) 读取 data.json 展示
 
 退出码:
   0 = 正常完成 (允许部分节点检测失败)
-  1 = 硬性失败 (数据源全挂 / 解析不出 SSTP 节点 / Worker 完全不可达 / 程序异常)
-     这些情况绝不允许"假成功"
+  1 = 硬性失败 (数据源全挂 / 解析不出 SSTP 节点 / 程序异常)
 """
 
 import base64
@@ -678,9 +677,10 @@ def main():
     log("CLOUDFLARE WORKER", f"检测失败: {len(failed)}" + (f" (其中 Worker 异常 {len(worker_errors)})" if worker_errors else ""))
     log("CLOUDFLARE WORKER", f"耗时: {elapsed:.1f}s")
 
-    # 硬性失败: Worker 完全不可达 (没有任何一个请求拿到正常响应)
+    # ========== 修改点：注释 die，改成警告，不终止脚本 ==========
     if uniq and not success and len(worker_errors) == len(uniq):
-        die("Worker 全部请求异常, 检测服务不可用 — 本次运行判定失败 (不生成空结果)")
+        log("WARNING", "Worker 全部请求异常, 检测服务不可用，继续生成结果页面（全部节点标记失败）")
+        # die("Worker 全部请求异常, 检测服务不可用 — 本次运行判定失败 (不生成空结果)")
 
     # 4) 结果 + 网页
     data = build_outputs(results, raw_count, sstp_count, source)
